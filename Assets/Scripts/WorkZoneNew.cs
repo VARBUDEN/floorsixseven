@@ -1,27 +1,31 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class WorkZoneNew : MonoBehaviour
 {
     [Header("Настройки зоны")]
     public string zoneName = "Рабочая точка";
-    public string zoneType = "work";  // lift, eight, promo, perek, navig, kalizeum
+    public string zoneType = "work";
+    
+    [Header("Состояние зоны")]
+    public List<InspectorBot> inspectorBots = new List<InspectorBot>();
+    public bool isOccupiedByPlayer = false;
+    public List<InspectorBot> botsInZone = new List<InspectorBot>();
+    public List<NeutralBot> neutralBots = new List<NeutralBot>();
     
     private StaminaNew stamina;
     
     void Start()
     {
         stamina = FindObjectOfType<StaminaNew>();
-        if (stamina == null)
-        {
-            Debug.LogError("[WorkZone] StaminaNew не найден!");
-        }
     }
     
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log($"[WorkZone] Вошёл в зону: {zoneName} (тип: {zoneType})");
+            isOccupiedByPlayer = true;
+            Debug.Log($"[WorkZone] Игрок вошёл в зону: {zoneName}");
             
             if (stamina != null)
             {
@@ -35,7 +39,8 @@ public class WorkZoneNew : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log($"[WorkZone] Вышел из зоны: {zoneName}");
+            isOccupiedByPlayer = false;
+            Debug.Log($"[WorkZone] Игрок вышел из зоны: {zoneName}");
             
             if (stamina != null)
             {

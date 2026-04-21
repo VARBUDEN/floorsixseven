@@ -21,8 +21,15 @@ public class StaminaNew : MonoBehaviour
     
     [Header("Восстановление")]
     public float breakRestore = 5f;          // восстановление на перерыве
-    
+
+    [Header("Восстановление при взгляде вниз")]
+public float lookDownRestoreRate = 10f;     // сколько восстанавливаем в секунду
+public float lookDownDelay = 3f;            // задержка перед восстановлением (сек)
+public float lookDownAngleThreshold = 80f;   // угол при котором считается "взгляд вниз" (80 градусов)
+
     [Header("Состояния")]
+    public bool isLookingDown = false;           // смотрит ли игрок вниз
+private float lookDownTimer = 0f;            // таймер для задержки
     public bool isAtWork = false;
     public bool isOnBreak = false;
     public string currentZoneType = "none";
@@ -39,37 +46,84 @@ public class StaminaNew : MonoBehaviour
     }
     
     void Update()
+{
+    // --- ПРОВЕРКА ВЗГЛЯДА ВНИЗ ---
+    CheckLookDown();
+    
+    // --- ПОСТОЯННАЯ ТРАТА (всегда) ---
+    float totalDrain = constantDrain * Time.deltaTime;
+    
+    // --- ДОПОЛНИТЕЛЬНАЯ ТРАТА НА РАБОЧЕЙ ТОЧКЕ ---
+    if (isAtWork && !isOnBreak)
     {
-        // --- ПОСТОЯННАЯ ТРАТА (всегда) ---
-        float totalDrain = constantDrain * Time.deltaTime;
-        
-        // --- ТРАТА НА РАБОЧЕЙ ТОЧКЕ ---
-        if (isAtWork && !isOnBreak)
+        float zoneDrain = GetZoneDrain();
+        totalDrain += zoneDrain * Time.deltaTime;
+    }
+    
+    // --- ВОССТАНОВЛЕНИЕ НА ПЕРЕРЫВЕ ---
+    if (isOnBreak)
+    {
+        currentStamina += breakRestore * Time.deltaTime;
+    }
+    // --- НОВОЕ: ВОССТАНОВЛЕНИЕ ПРИ ВЗГЛЯДЕ ВНИЗ ---
+    else if (isLookingDown)
+    {
+        // Задержка перед началом восстановления
+        if (lookDownTimer < lookDownDelay)
         {
-            float zoneDrain = GetZoneDrain();
-            totalDrain += zoneDrain * Time.deltaTime;
-        }
-        
-        // --- ВОССТАНОВЛЕНИЕ ---
-        if (isOnBreak)
-        {
-            currentStamina += breakRestore * Time.deltaTime;
+            lookDownTimer += Time.deltaTime;
         }
         else
         {
-            currentStamina -= totalDrain;
-        }
-        
-        currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
-        UpdateUI();
-        
-        if (currentStamina <= 0f)
-        {
-            Debug.Log("[Stamina] СТАМИНА КОНЧИЛАСЬ!");
-            enabled = false;
+            currentStamina += lookDownRestoreRate * Time.deltaTime;
         }
     }
+    else
+    {
+        // Если не смотрит вниз — сбрасываем таймер
+        lookDownTimer = 0f;
+        currentStamina -= totalDrain;
+    }
     
+    // Ограничиваем значения
+    currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+    
+    // Обновляем UI
+    UpdateUI();
+    
+    // Проверка на конец дня
+    if (currentStamina <= 0f)
+    {
+        Debug.Log("[Stamina] СТАМИНА КОНЧИЛАСЬ! День окончен.");
+        enabled = false;
+    }
+}
+    
+    /// <summary>
+/// Проверяет, смотрит ли игрок вниз (угол камеры по X)
+/// </summary>
+void CheckLookDown()
+{
+    if (Camera.main != null)
+    {
+        // Получаем угол поворота камеры по оси X
+        float cameraAngleX = Camera.main.transform.localEulerAngles.x;
+        
+        // Нормализуем угол (если больше 180, то считаем отрицательный)
+        if (cameraAngleX > 180f)
+            cameraAngleX = 360f - cameraAngleX;
+        
+        // Проверяем, достиг ли угол порога
+        // Смотрим вниз, когда угол X > lookDownAngleThreshold (например, 80 градусов)
+        isLookingDown = cameraAngleX >= lookDownAngleThreshold;
+        
+        // Для отладки (можно убрать потом)
+        if (isLookingDown && lookDownTimer < lookDownDelay)
+        {
+            Debug.Log($"[Stamina] Смотрю вниз... жду {lookDownDelay - lookDownTimer:F1} сек до восстановления");
+        }
+    }
+}
     float GetZoneDrain()
     {
         switch (currentZoneType)
