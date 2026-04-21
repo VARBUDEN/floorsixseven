@@ -4,54 +4,66 @@ using TMPro;
 
 public class StaminaNew : MonoBehaviour
 {
-    [Header("Основные параметры")]
+    // ==================== ОСНОВНЫЕ ПАРАМЕТРЫ ====================
+    [Header("=== ОСНОВНЫЕ ПАРАМЕТРЫ ===")]
     public float maxStamina = 100f;
     public float currentStamina;
 
-    [Header("Постоянная трата (всегда)")]
-    public float constantDrain = 0.2f;      // усталость даже вне точек
+    // ==================== СТАМИНА (ТРАТА) ====================
+    [Header("=== СТАМИНА: ПОСТОЯННАЯ ТРАТА ===")]
+    public float constantDrain = 0.2f;
 
-    [Header("Телефон")]
-    public float maxBattery = 100f;           // максимальный заряд
-    public float currentBattery;              // текущий заряд
-    public float batteryDrainRate = 5f;       // трата заряда в секунду при взгляде вниз
-    public float batteryRestoreRate = 10f;    // восстановление заряда на перерыве
-
-    [Header("UI Телефона")]
-    public Slider batterySlider;
-    public TextMeshProUGUI batteryText;
-
-    [Header("Трата на разных точках")]
+    [Header("=== СТАМИНА: ТРАТА НА ТОЧКАХ ===")]
     public float liftDrain = 0.5f;           // Лифт
     public float eightDrain = 1.3f;          // 8-ка
-    public float promoDrain = 0f;            // Промо (траты нет)
+    public float promoDrain = 0f;            // Промо
     public float perekDrain = 1.0f;          // Перекрёсток
     public float navigDrain = 1.0f;          // Навигация
     public float kalizeumDrain = 1.0f;       // Кализеум
 
-    [Header("Восстановление")]
-    public float breakRestore = 5f;          // восстановление на перерыве
+    // ==================== СТАМИНА (ВОССТАНОВЛЕНИЕ) ====================
+    [Header("=== СТАМИНА: ВОССТАНОВЛЕНИЕ ===")]
+    public float breakRestore = 5f;                      // на перерыве
+    public float lookDownRestoreRate = 10f;              // при взгляде вниз
 
-    [Header("Восстановление при взгляде вниз")]
-    public float lookDownRestoreRate = 10f;     // сколько восстанавливаем в секунду
-    public float lookDownDelay = 3f;            // задержка перед восстановлением (сек)
-    public float lookDownAngleThreshold = 80f;   // угол при котором считается "взгляд вниз" (80 градусов)
+    // ==================== ВЗГЛЯД ВНИЗ (ЗАДЕРЖКА) ====================
+    [Header("=== ВЗГЛЯД ВНИЗ: ЗАДЕРЖКА ===")]
+    public float lookDownDelay = 3f;                     // задержка перед восстановлением
+    public float lookDownAngleThreshold = 80f;           // угол для "взгляда вниз"
+    private float lookDownTimer = 0f;                    // таймер задержки
 
-    [Header("Состояния")]
-    public bool isLookingDown = false;           // смотрит ли игрок вниз
-    private float lookDownTimer = 0f;            // таймер для задержки
+    // ==================== ТЕЛЕФОН ====================
+    [Header("=== ТЕЛЕФОН ===")]
+    public float maxBattery = 100f;
+    public float currentBattery;
+    public float batteryDrainRate = 5f;                  // трата при взгляде вниз
+    public float batteryRestoreRate = 10f;               // восстановление на перерыве
+
+    // ==================== СОСТОЯНИЯ ====================
+    [Header("=== СОСТОЯНИЯ (НЕ ТРОГАТЬ, ТОЛЬКО ДЛЯ ПРОГРАММИСТА) ===")]
+    public bool isLookingDown = false;
     public bool isAtWork = false;
     public bool isOnBreak = false;
     public string currentZoneType = "none";
 
-    [Header("UI")]
+    // ==================== UI (ИНТЕРФЕЙС) ====================
+    [Header("=== UI: СТАМИНА ===")]
     public Slider staminaSlider;
     public TextMeshProUGUI staminaText;
 
+    [Header("=== UI: ТЕЛЕФОН ===")]
+    public Slider batterySlider;
+    public TextMeshProUGUI batteryText;
+
+    [Header("=== UI: ЗАДЕРЖКА ВЗГЛЯДА ВНИЗ ===")]
+    public Slider lookDownDelaySlider;
+
+    // ==================== МЕТОДЫ ====================
+    
     void Start()
     {
         currentStamina = maxStamina;
-        currentBattery = maxBattery;  // телефон полностью заряжен
+        currentBattery = maxBattery;
 
         UpdateUI();
         UpdateBatteryUI();
@@ -59,82 +71,59 @@ public class StaminaNew : MonoBehaviour
         Debug.Log($"[Stamina] Запущена. Стамина: {currentStamina}/{maxStamina}, Заряд: {currentBattery}/{maxBattery}");
     }
 
-void UpdateBatteryUI()
-{
-    if (batterySlider != null)
-    {
-        batterySlider.maxValue = maxBattery;
-        batterySlider.value = currentBattery;
-    }
-    
-    if (batteryText != null)
-    {
-        batteryText.text = $"{currentBattery:F0}%";
-    }
-}
     void Update()
     {
-        // --- ПРОВЕРКА ВЗГЛЯДА ВНИЗ ---
         CheckLookDown();
-
-        // --- ПОСТОЯННАЯ ТРАТА СТАМИНЫ ---
+        
         float totalDrain = constantDrain * Time.deltaTime;
-
+        
         if (isAtWork && !isOnBreak)
         {
             float zoneDrain = GetZoneDrain();
             totalDrain += zoneDrain * Time.deltaTime;
         }
-
-        // --- ВОССТАНОВЛЕНИЕ НА ПЕРЕРЫВЕ ---
+        
         if (isOnBreak)
         {
-            // Восстанавливаем стамину
             currentStamina += breakRestore * Time.deltaTime;
-
-            // Восстанавливаем заряд телефона на перерыве
             currentBattery += batteryRestoreRate * Time.deltaTime;
         }
-        // --- ВОССТАНОВЛЕНИЕ ПРИ ВЗГЛЯДЕ ВНИЗ ---
         else if (isLookingDown && currentBattery > 0)
         {
-            // Задержка перед началом восстановления
             if (lookDownTimer < lookDownDelay)
             {
                 lookDownTimer += Time.deltaTime;
             }
             else
             {
-                // Восстанавливаем стамину
                 currentStamina += lookDownRestoreRate * Time.deltaTime;
-
-                // Тратим заряд телефона
                 currentBattery -= batteryDrainRate * Time.deltaTime;
-
+                
                 if (currentBattery <= 0)
                 {
-                    Debug.Log("[Телефон] Телефон разрядился! Нужно зарядить на перерыве.");
+                    Debug.Log("[Телефон] Телефон разрядился!");
                     currentBattery = 0;
-                    isLookingDown = false;  // больше не смотрим вниз, пока не зарядим
                 }
             }
         }
         else
         {
-            // Сбрасываем таймер, если не смотрим вниз
             lookDownTimer = 0f;
             currentStamina -= totalDrain;
+            
+            if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
+                lookDownDelaySlider.gameObject.SetActive(false);
+            
+            if (lookDownDelaySlider != null)
+                lookDownDelaySlider.value = 0;
         }
-
-        // Ограничиваем значения
+        
         currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
         currentBattery = Mathf.Clamp(currentBattery, 0f, maxBattery);
-
-        // Обновляем UI
+        
         UpdateUI();
         UpdateBatteryUI();
-
-        // Проверка на конец дня
+        
         if (currentStamina <= 0f)
         {
             Debug.Log("[Stamina] СТАМИНА КОНЧИЛАСЬ! День окончен.");
@@ -142,28 +131,48 @@ void UpdateBatteryUI()
         }
     }
 
-    /// <summary>
-    /// Проверяет, смотрит ли игрок вниз (угол камеры по X)
-    /// </summary>
-void CheckLookDown()
-{
-    if (Camera.main != null)
+    void CheckLookDown()
     {
-        float cameraAngleX = Camera.main.transform.localEulerAngles.x;
-        
-        if (cameraAngleX > 180f)
-            cameraAngleX = 360f - cameraAngleX;
-        
-        // Смотрим вниз только если есть заряд телефона
-        bool canLookDown = currentBattery > 0;
-        isLookingDown = cameraAngleX >= lookDownAngleThreshold && canLookDown;
-        
-        if (cameraAngleX >= lookDownAngleThreshold && !canLookDown)
+        if (Camera.main != null)
         {
-            Debug.Log("[Телефон] Телефон разряжен! Зарядите его на перерыве.");
+            float cameraAngleX = Camera.main.transform.localEulerAngles.x;
+            
+            if (cameraAngleX > 180f)
+                cameraAngleX = 360f - cameraAngleX;
+            
+            bool canLookDown = currentBattery > 0;
+            isLookingDown = cameraAngleX >= lookDownAngleThreshold && canLookDown;
+            
+            if (isLookingDown && lookDownTimer < lookDownDelay)
+            {
+                if (lookDownDelaySlider != null && !lookDownDelaySlider.gameObject.activeSelf)
+                    lookDownDelaySlider.gameObject.SetActive(true);
+                
+                float progress = lookDownTimer / lookDownDelay;
+                if (lookDownDelaySlider != null)
+                    lookDownDelaySlider.value = progress;
+            }
+            else if (isLookingDown && lookDownTimer >= lookDownDelay)
+            {
+                if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
+                    lookDownDelaySlider.gameObject.SetActive(false);
+            }
+            else
+            {
+                if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
+                    lookDownDelaySlider.gameObject.SetActive(false);
+                
+                if (lookDownDelaySlider != null)
+                    lookDownDelaySlider.value = 0;
+            }
+            
+            if (cameraAngleX >= lookDownAngleThreshold && !canLookDown)
+            {
+                Debug.Log("[Телефон] Телефон разряжен! Зарядите его на перерыве.");
+            }
         }
     }
-}
+
     float GetZoneDrain()
     {
         switch (currentZoneType)
@@ -174,7 +183,7 @@ void CheckLookDown()
             case "perek": return perekDrain;
             case "navig": return navigDrain;
             case "kalizeum": return kalizeumDrain;
-            default: return 1f; // если тип не задан — стандартная трата
+            default: return 1f;
         }
     }
 
@@ -195,6 +204,20 @@ void CheckLookDown()
         if (staminaText != null)
         {
             staminaText.text = $"Стамина: {currentStamina:F0}/{maxStamina}";
+        }
+    }
+
+    void UpdateBatteryUI()
+    {
+        if (batterySlider != null)
+        {
+            batterySlider.maxValue = maxBattery;
+            batterySlider.value = currentBattery;
+        }
+        
+        if (batteryText != null)
+        {
+            batteryText.text = $"{currentBattery:F0}%";
         }
     }
 
