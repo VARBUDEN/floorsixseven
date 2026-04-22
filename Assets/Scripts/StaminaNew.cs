@@ -59,7 +59,7 @@ public class StaminaNew : MonoBehaviour
     public Slider lookDownDelaySlider;
 
     // ==================== МЕТОДЫ ====================
-    
+
     void Start()
     {
         currentStamina = maxStamina;
@@ -69,20 +69,33 @@ public class StaminaNew : MonoBehaviour
         UpdateBatteryUI();
 
         Debug.Log($"[Stamina] Запущена. Стамина: {currentStamina}/{maxStamina}, Заряд: {currentBattery}/{maxBattery}");
+
+        AngerSystem anger = FindObjectOfType<AngerSystem>();
+        if (anger != null)
+        {
+            anger.OnDayEndEarly += EndDayEarly;
+        }
+    }
+
+    void EndDayEarly()
+    {
+        Debug.Log("[Stamina] День закончен досрочно из-за гнева босса!");
+        enabled = false;  // отключаем трату стамины
+                          // Здесь можно показать сообщение
     }
 
     void Update()
     {
         CheckLookDown();
-        
+
         float totalDrain = constantDrain * Time.deltaTime;
-        
+
         if (isAtWork && !isOnBreak)
         {
             float zoneDrain = GetZoneDrain();
             totalDrain += zoneDrain * Time.deltaTime;
         }
-        
+
         if (isOnBreak)
         {
             currentStamina += breakRestore * Time.deltaTime;
@@ -98,7 +111,7 @@ public class StaminaNew : MonoBehaviour
             {
                 currentStamina += lookDownRestoreRate * Time.deltaTime;
                 currentBattery -= batteryDrainRate * Time.deltaTime;
-                
+
                 if (currentBattery <= 0)
                 {
                     Debug.Log("[Телефон] Телефон разрядился!");
@@ -110,20 +123,20 @@ public class StaminaNew : MonoBehaviour
         {
             lookDownTimer = 0f;
             currentStamina -= totalDrain;
-            
+
             if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
                 lookDownDelaySlider.gameObject.SetActive(false);
-            
+
             if (lookDownDelaySlider != null)
                 lookDownDelaySlider.value = 0;
         }
-        
+
         currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
         currentBattery = Mathf.Clamp(currentBattery, 0f, maxBattery);
-        
+
         UpdateUI();
         UpdateBatteryUI();
-        
+
         if (currentStamina <= 0f)
         {
             Debug.Log("[Stamina] СТАМИНА КОНЧИЛАСЬ! День окончен.");
@@ -136,18 +149,18 @@ public class StaminaNew : MonoBehaviour
         if (Camera.main != null)
         {
             float cameraAngleX = Camera.main.transform.localEulerAngles.x;
-            
+
             if (cameraAngleX > 180f)
                 cameraAngleX = 360f - cameraAngleX;
-            
+
             bool canLookDown = currentBattery > 0;
             isLookingDown = cameraAngleX >= lookDownAngleThreshold && canLookDown;
-            
+
             if (isLookingDown && lookDownTimer < lookDownDelay)
             {
                 if (lookDownDelaySlider != null && !lookDownDelaySlider.gameObject.activeSelf)
                     lookDownDelaySlider.gameObject.SetActive(true);
-                
+
                 float progress = lookDownTimer / lookDownDelay;
                 if (lookDownDelaySlider != null)
                     lookDownDelaySlider.value = progress;
@@ -161,11 +174,11 @@ public class StaminaNew : MonoBehaviour
             {
                 if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
                     lookDownDelaySlider.gameObject.SetActive(false);
-                
+
                 if (lookDownDelaySlider != null)
                     lookDownDelaySlider.value = 0;
             }
-            
+
             if (cameraAngleX >= lookDownAngleThreshold && !canLookDown)
             {
                 Debug.Log("[Телефон] Телефон разряжен! Зарядите его на перерыве.");
@@ -214,7 +227,7 @@ public class StaminaNew : MonoBehaviour
             batterySlider.maxValue = maxBattery;
             batterySlider.value = currentBattery;
         }
-        
+
         if (batteryText != null)
         {
             batteryText.text = $"{currentBattery:F0}%";
