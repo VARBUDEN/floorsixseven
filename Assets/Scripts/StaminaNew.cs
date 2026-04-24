@@ -4,98 +4,74 @@ using TMPro;
 
 public class StaminaNew : MonoBehaviour
 {
-    // ==================== ОСНОВНЫЕ ПАРАМЕТРЫ ====================
     [Header("=== ОСНОВНЫЕ ПАРАМЕТРЫ ===")]
     public float maxStamina = 100f;
     public float currentStamina;
 
-    // ==================== СТАМИНА (ТРАТА) ====================
     [Header("=== СТАМИНА: ПОСТОЯННАЯ ТРАТА ===")]
     public float constantDrain = 0.2f;
 
-    [Header("=== СТАМИНА: ТРАТА НА ТОЧКАХ ===")]
-    public float liftDrain = 0.5f;           // Лифт
-    public float eightDrain = 1.3f;          // 8-ка
-    public float promoDrain = 0f;            // Промо
-    public float perekDrain = 1.0f;          // Перекрёсток
-    public float navigDrain = 1.0f;          // Навигация
-    public float kalizeumDrain = 1.0f;       // Кализеум
-
-    // ==================== СТАМИНА (ВОССТАНОВЛЕНИЕ) ====================
-    [Header("=== СТАМИНА: ВОССТАНОВЛЕНИЕ ===")]
-    public float breakRestore = 5f;                      // на перерыве
-    public float lookDownRestoreRate = 10f;              // при взгляде вниз
-
-    // ==================== ВЗГЛЯД ВНИЗ (ЗАДЕРЖКА) ====================
-    [Header("=== ВЗГЛЯД ВНИЗ: ЗАДЕРЖКА ===")]
-    public float lookDownDelay = 3f;                     // задержка перед восстановлением
-    public float lookDownAngleThreshold = 80f;           // угол для "взгляда вниз"
-    private float lookDownTimer = 0f;                    // таймер задержки
-
-    // ==================== ТЕЛЕФОН ====================
     [Header("=== ТЕЛЕФОН ===")]
     public float maxBattery = 100f;
     public float currentBattery;
-    public float batteryDrainRate = 5f;                  // трата при взгляде вниз
-    public float batteryRestoreRate = 10f;               // восстановление на перерыве
+    public float batteryDrainRate = 5f;
+    public float batteryRestoreRate = 10f;
 
-    // ==================== СОСТОЯНИЯ ====================
-    [Header("=== СОСТОЯНИЯ (НЕ ТРОГАТЬ, ТОЛЬКО ДЛЯ ПРОГРАММИСТА) ===")]
+    [Header("=== СТАМИНА: ТРАТА НА ТОЧКАХ ===")]
+    public float liftDrain = 0.5f;
+    public float eightDrain = 1.3f;
+    public float promoDrain = 0f;
+    public float perekDrain = 1.0f;
+    public float navigDrain = 1.0f;
+    public float kalizeumDrain = 1.0f;
+
+    [Header("=== СТАМИНА: ВОССТАНОВЛЕНИЕ ===")]
+    public float breakRestore = 5f;
+    public float lookDownRestoreRate = 10f;
+
+    [Header("=== ВЗГЛЯД ВНИЗ: ЗАДЕРЖКА ===")]
+    public float lookDownDelay = 3f;
+    public float lookDownAngleThreshold = 80f;
+    private float lookDownTimer = 0f;
+
+    [Header("=== СОСТОЯНИЯ ===")]
     public bool isLookingDown = false;
     public bool isAtWork = false;
     public bool isOnBreak = false;
     public string currentZoneType = "none";
 
-    // ==================== UI (ИНТЕРФЕЙС) ====================
-    [Header("=== UI: СТАМИНА ===")]
+    [Header("=== UI ===")]
     public Slider staminaSlider;
     public TextMeshProUGUI staminaText;
-
-    [Header("=== UI: ТЕЛЕФОН ===")]
     public Slider batterySlider;
     public TextMeshProUGUI batteryText;
-
-    [Header("=== UI: ЗАДЕРЖКА ВЗГЛЯДА ВНИЗ ===")]
     public Slider lookDownDelaySlider;
-
-    // ==================== МЕТОДЫ ====================
 
     void Start()
     {
         currentStamina = maxStamina;
         currentBattery = maxBattery;
-
         UpdateUI();
         UpdateBatteryUI();
-
+        
+        // Применяем бафф выбранного персонажа
+        ApplyCharacterBuffs(CharacterSelect.selectedCharacter);
+        
         Debug.Log($"[Stamina] Запущена. Стамина: {currentStamina}/{maxStamina}, Заряд: {currentBattery}/{maxBattery}");
-
-        AngerSystem anger = FindObjectOfType<AngerSystem>();
-        if (anger != null)
-        {
-            anger.OnDayEndEarly += EndDayEarly;
-        }
-    }
-
-    void EndDayEarly()
-    {
-        Debug.Log("[Stamina] День закончен досрочно из-за гнева босса!");
-        enabled = false;  // отключаем трату стамины
-                          // Здесь можно показать сообщение
     }
 
     void Update()
     {
         CheckLookDown();
-
+        
         float totalDrain = constantDrain * Time.deltaTime;
-
+        
         if (isAtWork && !isOnBreak)
         {
             float zoneDrain = GetZoneDrain();
             totalDrain += zoneDrain * Time.deltaTime;
         }
-
+        
         if (isOnBreak)
         {
             currentStamina += breakRestore * Time.deltaTime;
@@ -111,7 +87,7 @@ public class StaminaNew : MonoBehaviour
             {
                 currentStamina += lookDownRestoreRate * Time.deltaTime;
                 currentBattery -= batteryDrainRate * Time.deltaTime;
-
+                
                 if (currentBattery <= 0)
                 {
                     Debug.Log("[Телефон] Телефон разрядился!");
@@ -123,20 +99,20 @@ public class StaminaNew : MonoBehaviour
         {
             lookDownTimer = 0f;
             currentStamina -= totalDrain;
-
+            
             if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
                 lookDownDelaySlider.gameObject.SetActive(false);
-
+            
             if (lookDownDelaySlider != null)
                 lookDownDelaySlider.value = 0;
         }
-
+        
         currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
         currentBattery = Mathf.Clamp(currentBattery, 0f, maxBattery);
-
+        
         UpdateUI();
         UpdateBatteryUI();
-
+        
         if (currentStamina <= 0f)
         {
             Debug.Log("[Stamina] СТАМИНА КОНЧИЛАСЬ! День окончен.");
@@ -149,18 +125,18 @@ public class StaminaNew : MonoBehaviour
         if (Camera.main != null)
         {
             float cameraAngleX = Camera.main.transform.localEulerAngles.x;
-
+            
             if (cameraAngleX > 180f)
                 cameraAngleX = 360f - cameraAngleX;
-
+            
             bool canLookDown = currentBattery > 0;
             isLookingDown = cameraAngleX >= lookDownAngleThreshold && canLookDown;
-
+            
             if (isLookingDown && lookDownTimer < lookDownDelay)
             {
                 if (lookDownDelaySlider != null && !lookDownDelaySlider.gameObject.activeSelf)
                     lookDownDelaySlider.gameObject.SetActive(true);
-
+                
                 float progress = lookDownTimer / lookDownDelay;
                 if (lookDownDelaySlider != null)
                     lookDownDelaySlider.value = progress;
@@ -174,14 +150,9 @@ public class StaminaNew : MonoBehaviour
             {
                 if (lookDownDelaySlider != null && lookDownDelaySlider.gameObject.activeSelf)
                     lookDownDelaySlider.gameObject.SetActive(false);
-
+                
                 if (lookDownDelaySlider != null)
                     lookDownDelaySlider.value = 0;
-            }
-
-            if (cameraAngleX >= lookDownAngleThreshold && !canLookDown)
-            {
-                Debug.Log("[Телефон] Телефон разряжен! Зарядите его на перерыве.");
             }
         }
     }
@@ -227,7 +198,7 @@ public class StaminaNew : MonoBehaviour
             batterySlider.maxValue = maxBattery;
             batterySlider.value = currentBattery;
         }
-
+        
         if (batteryText != null)
         {
             batteryText.text = $"{currentBattery:F0}%";
@@ -240,5 +211,65 @@ public class StaminaNew : MonoBehaviour
         currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
         UpdateUI();
         Debug.Log($"[Stamina] +{amount}, стало: {currentStamina:F0}");
+    }
+
+    public void ApplyCharacterBuffs(CharacterSelect.Character character)
+    {
+        ResetToDefault();
+        
+        Debug.Log($"[Stamina] Применяю бафф для персонажа: {character}");
+        
+        switch (character)
+        {
+            case CharacterSelect.Character.Morena:
+                maxStamina = 120f;
+                maxBattery = 120f;
+                break;
+                
+            case CharacterSelect.Character.Radmir:
+                lookDownRestoreRate = 15f;
+                breakRestore = 7f;
+                break;
+                
+            case CharacterSelect.Character.Dyrka:
+                liftDrain *= 0.92f;
+                eightDrain *= 0.92f;
+                perekDrain *= 0.92f;
+                navigDrain *= 0.92f;
+                kalizeumDrain *= 0.92f;
+                break;
+                
+            case CharacterSelect.Character.Svistik:
+            case CharacterSelect.Character.Shell:
+            case CharacterSelect.Character.MrPi:
+            case CharacterSelect.Character.Kulich:
+            case CharacterSelect.Character.Magomedova:
+            default:
+                // без изменений
+                break;
+        }
+        
+        currentStamina = maxStamina;
+        currentBattery = maxBattery;
+        UpdateUI();
+        UpdateBatteryUI();
+    }
+
+    private void ResetToDefault()
+    {
+        maxStamina = 100f;
+        maxBattery = 100f;
+        constantDrain = 0.2f;
+        liftDrain = 0.5f;
+        eightDrain = 1.3f;
+        promoDrain = 0f;
+        perekDrain = 1.0f;
+        navigDrain = 1.0f;
+        kalizeumDrain = 1.0f;
+        breakRestore = 5f;
+        lookDownRestoreRate = 10f;
+        batteryDrainRate = 5f;
+        batteryRestoreRate = 10f;
+        lookDownDelay = 3f;
     }
 }
