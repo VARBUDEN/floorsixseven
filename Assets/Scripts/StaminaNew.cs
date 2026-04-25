@@ -177,7 +177,7 @@ public class StaminaNew : MonoBehaviour
         Debug.Log($"[Stamina] Точка: {zoneType}, трата: {GetZoneDrain()}/сек");
     }
 
-    void UpdateUI()
+    public void UpdateUI()
     {
         if (staminaSlider != null)
         {
@@ -191,7 +191,7 @@ public class StaminaNew : MonoBehaviour
         }
     }
 
-    void UpdateBatteryUI()
+    public void UpdateBatteryUI()
     {
         if (batterySlider != null)
         {
