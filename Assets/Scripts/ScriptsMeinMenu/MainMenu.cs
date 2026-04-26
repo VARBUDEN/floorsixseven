@@ -19,6 +19,10 @@ public class MainMenu : MonoBehaviour
     
     void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+
         // Проверка и защита от null
         if (recordsPanel != null)
             recordsPanel.SetActive(false);

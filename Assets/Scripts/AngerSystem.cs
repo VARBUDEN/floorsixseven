@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class AngerSystem : MonoBehaviour
 {
@@ -17,27 +18,43 @@ public class AngerSystem : MonoBehaviour
     public Color normalColor = Color.white;
     public Color filledColor = Color.red;
     
+    private bool isDayEnding = false;  // чтобы не вызывать несколько раз
+    
     void Start()
     {
         ResetDailyAnger();
         UpdateTotalAngerUI();
     }
     
-    public void AddDailyAnger(float amount)
+public void AddDailyAnger(float amount)
+{
+    if (isDayEnding) return;
+    
+    dailyAnger += amount;
+    dailyAnger = Mathf.Clamp(dailyAnger, 0f, maxDailyAnger);
+    
+    Debug.Log($"[Гнев] +{amount}. Дневной гнев: {dailyAnger}/{maxDailyAnger}");
+    
+    UpdateDailyAngerUI();
+    
+    if (dailyAnger >= maxDailyAnger)
     {
-        dailyAnger += amount;
-        dailyAnger = Mathf.Clamp(dailyAnger, 0f, maxDailyAnger);
+        isDayEnding = true;
+        Debug.Log("[Гнев] ДОСРОЧНЫЙ КОНЕЦ ДНЯ!");
         
-        Debug.Log($"[Гнев] +{amount}. Дневной гнев: {dailyAnger}/{maxDailyAnger}");
+        // ВЫЗЫВАЕМ AddTotalAnger, который сам проверит увольнение
+        AddTotalAnger(1);
         
-        UpdateDailyAngerUI();
-        
-        if (dailyAnger >= maxDailyAnger)
+        DayCycleSystem dayCycle = FindAnyObjectByType<DayCycleSystem>();
+        if (dayCycle != null)
         {
-            Debug.Log("[Гнев] ДОСРОЧНЫЙ КОНЕЦ ДНЯ!");
-            AddTotalAnger(1);
+            dayCycle.EndDayEarly();
         }
+        
+        dailyAnger = 0f;
+        UpdateDailyAngerUI();
     }
+}
     
     public void AddTotalAnger(int amount)
     {
@@ -46,15 +63,27 @@ public class AngerSystem : MonoBehaviour
         
         UpdateTotalAngerUI();
         
+        // УВОЛЬНЕНИЕ ТОЛЬКО ЗДЕСЬ
         if (totalAnger >= maxTotalAnger)
         {
-            Debug.Log("[Гнев] ВАС УВОЛИЛИ!");
+            Debug.Log("[Гнев] ВАС УВОЛИЛИ! Переход на экран Game Over");
+            
+            DayCycleSystem dayCycle = FindAnyObjectByType<DayCycleSystem>();
+            if (dayCycle != null)
+            {
+                PlayerPrefs.SetInt("LastDays", DayCycleSystem.LastDays);
+                PlayerPrefs.SetInt("LastSalary", DayCycleSystem.LastSalary);
+                PlayerPrefs.Save();
+            }
+            
+            SceneManager.LoadScene("GameOver");
         }
     }
     
     public void ResetDailyAnger()
     {
         dailyAnger = 0f;
+        isDayEnding = false;
         UpdateDailyAngerUI();
     }
     
@@ -62,6 +91,7 @@ public class AngerSystem : MonoBehaviour
     {
         if (dailyAngerSlider != null)
         {
+            dailyAngerSlider.maxValue = maxDailyAnger;
             dailyAngerSlider.value = dailyAnger;
         }
         
@@ -69,9 +99,23 @@ public class AngerSystem : MonoBehaviour
         {
             dailyAngerText.text = $"ГНЕВ: {dailyAnger:F0}%";
         }
+        
+        if (dailyAngerSlider != null)
+        {
+            Image fillImage = dailyAngerSlider.fillRect?.GetComponent<Image>();
+            if (fillImage != null)
+            {
+                if (dailyAnger < 30f)
+                    fillImage.color = Color.green;
+                else if (dailyAnger < 70f)
+                    fillImage.color = Color.yellow;
+                else
+                    fillImage.color = Color.red;
+            }
+        }
     }
     
-    void UpdateTotalAngerUI()
+    public void UpdateTotalAngerUI()
     {
         if (totalAngerIcons == null) return;
         

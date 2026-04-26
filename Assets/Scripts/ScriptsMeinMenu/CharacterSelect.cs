@@ -59,6 +59,9 @@ public class CharacterSelect : MonoBehaviour
     
     void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // Собираем кнопки в массив
         characterButtons = new Button[] {
             btnSvistik, btnShell, btnDyrka, btnMrPi,
@@ -115,6 +118,8 @@ public class CharacterSelect : MonoBehaviour
     
     public void OnStartGameClick()
     {
+        SceneManager.LoadScene("GameScene");
+
         if (selectedIndex == -1)
         {
             Debug.LogWarning("Сначала выбери персонажа!");

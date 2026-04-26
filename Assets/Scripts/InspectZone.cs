@@ -4,8 +4,8 @@ public class InspectZone : MonoBehaviour
 {
     [Header("Настройки зоны проверки")]
     public string zoneName = "Зона проверки";
-    public float angerPerSecond = 10f;      // гнев в секунду
-    public float staminaPenaltyPerSecond = 5f;  // стамина в секунду
+    public float angerPerSecond = 10f;
+    public float staminaPenaltyPerSecond = 5f;
     
     private StaminaNew playerStamina;
     private bool isPlayerInside = false;
@@ -35,17 +35,18 @@ public class InspectZone : MonoBehaviour
         if (!isPlayerInside) return;
         if (playerStamina == null) return;
         
-        // Если игрок смотрит в телефон (вниз)
+        // Не начисляем гнев, если день уже закончен
+        DayCycleSystem dayCycle = FindAnyObjectByType<DayCycleSystem>();
+        if (dayCycle != null && !dayCycle.isDayActive) return;
+        
         if (playerStamina.isLookingDown)
         {
-            // Постепенно добавляем гнев
-            AngerSystem anger = FindFirstObjectByType<AngerSystem>();
+            AngerSystem anger = FindAnyObjectByType<AngerSystem>();
             if (anger != null)
             {
                 anger.AddDailyAnger(angerPerSecond * Time.deltaTime);
             }
             
-            // Постепенно тратим стамину
             playerStamina.AddStamina(-staminaPenaltyPerSecond * Time.deltaTime);
         }
     }

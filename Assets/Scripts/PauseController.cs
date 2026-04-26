@@ -11,16 +11,15 @@ public class PauseController : MonoBehaviour
     public Button resumeButton;
     public Button restartButton;
     public Button menuButton;
+    public Button nextDayButton;  // ← НОВАЯ КНОПКА
     
     private bool isPaused = false;
     
     void Start()
     {
-        // Убеждаемся, что канвас выключен
         if (pauseCanvas != null)
             pauseCanvas.SetActive(false);
         
-        // Назначаем кнопки
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
         
@@ -30,14 +29,15 @@ public class PauseController : MonoBehaviour
         if (menuButton != null)
             menuButton.onClick.AddListener(Menu);
         
-        // Настройка курсора
+        if (nextDayButton != null)
+            nextDayButton.onClick.AddListener(NextDay);
+        
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
     
     void Update()
     {
-        // По нажатию Tab
         if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape))
         {
             if (isPaused)
@@ -81,5 +81,24 @@ public class PauseController : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
+    }
+    
+    void NextDay()
+    {
+        Debug.Log("[Пауза] Нажат Следующий день");
+        
+        // Находим DayCycleSystem и запускаем следующий день
+        DayCycleSystem dayCycle = FindAnyObjectByType<DayCycleSystem>();
+        if (dayCycle != null)
+        {
+            dayCycle.NextDay();
+        }
+        else
+        {
+            Debug.LogError("[Пауза] DayCycleSystem не найден!");
+        }
+        
+        // Выходим из паузы
+        Resume();
     }
 }
