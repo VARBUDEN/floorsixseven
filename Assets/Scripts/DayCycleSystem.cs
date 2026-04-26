@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class DayCycleSystem : MonoBehaviour
 {
@@ -31,12 +32,22 @@ public class DayCycleSystem : MonoBehaviour
     public float totalSalary = 0f;
     public bool isDayActive = true;
     
+    [Header("=== РАСПИСАНИЕ ===")]
+    public List<ScheduleSlot> dailySchedule = new List<ScheduleSlot>();
+    public ScheduleSlot currentSlot;
+    public ScheduleSlot nextSlot;
+    
     [Header("=== UI ===")]
     public TextMeshProUGUI dayText;
     public TextMeshProUGUI timeText;
     public Slider timeProgressSlider;
     public TextMeshProUGUI salaryText;
     public TextMeshProUGUI hourlyRateText;
+    
+    [Header("=== UI РАСПИСАНИЯ (HUD) ===")]
+    public TextMeshProUGUI currentZoneText;
+    public TextMeshProUGUI currentZoneTimerText;
+    public TextMeshProUGUI nextZoneText;
     
     [Header("=== UI КОНЦА ДНЯ ===")]
     public GameObject endDayPanel;
@@ -49,33 +60,227 @@ public class DayCycleSystem : MonoBehaviour
     private int currentHour = 10;
     private int currentMinute = 0;
     
-void Start()
+    void Start()
+    {
+        LastDays = 1;
+        LastSalary = 0;
+        totalSalary = 0f;
+        currentDaySalary = 0f;
+        currentDay = 1;
+        
+        stamina = FindAnyObjectByType<StaminaNew>();
+        angerSystem = FindAnyObjectByType<AngerSystem>();
+        timePerSecond = 1f / secondsPerHour;
+        
+        currentTime = startHour;
+        currentHour = startHour;
+        currentMinute = 0;
+        isDayActive = true;
+        
+        if (endDayPanel != null)
+            endDayPanel.SetActive(false);
+        
+        if (nextDayButton != null)
+            nextDayButton.onClick.AddListener(OnNextDayButton);
+        
+        GenerateSchedule();
+        UpdateAllUI();
+        UpdateStaticData();
+    }
+    
+    void GenerateSchedule()
+    {
+        dailySchedule.Clear();
+        
+        List<TimeSlot> timeSlots = new List<TimeSlot>
+        {
+            new TimeSlot(10.0f, 11.333f, "Рабочая точка"),
+            new TimeSlot(11.333f, 11.667f, "Перерыв"),
+            new TimeSlot(11.667f, 12.333f, "Рабочая точка"),
+            new TimeSlot(12.333f, 13.0f, "Рабочая точка"),
+            new TimeSlot(13.0f, 13.667f, "Обед"),
+            new TimeSlot(13.667f, 14.333f, "Рабочая точка"),
+            new TimeSlot(14.333f, 15.667f, "Рабочая точка"),
+            new TimeSlot(15.667f, 16.333f, "Рабочая точка"),
+            new TimeSlot(16.333f, 16.667f, "Перерыв"),
+            new TimeSlot(16.667f, 17.333f, "Рабочая точка"),
+            new TimeSlot(17.333f, 18.0f, "Рабочая точка"),
+            new TimeSlot(18.0f, 18.667f, "Ужин"),
+            new TimeSlot(18.667f, 19.333f, "Рабочая точка"),
+            new TimeSlot(19.333f, 20.0f, "Рабочая точка"),
+            new TimeSlot(20.0f, 20.333f, "Перерыв"),
+            new TimeSlot(20.333f, 22.0f, "Рабочая точка")
+        };
+        
+        string[] workZones = { "lift", "perek", "promo", "eight", "navig" };
+        string[] workZoneNames = { "Лифт", "Перекрёсток", "Промо", "8-ка", "Навигация" };
+        int[] zoneWeights = { 10, 8, 7, 3, 2 };
+        
+        float avgReputation = 0;
+        ReputationSystem repSystem = FindAnyObjectByType<ReputationSystem>();
+        if (repSystem != null)
+        {
+            avgReputation = repSystem.GetAverageReputation();
+        }
+        
+        foreach (TimeSlot slot in timeSlots)
+        {
+            ScheduleSlot scheduleSlot = new ScheduleSlot();
+            scheduleSlot.startTime = slot.startTime;
+            scheduleSlot.endTime = slot.endTime;
+            scheduleSlot.slotType = slot.slotType;
+            
+            if (slot.slotType == "Рабочая точка")
+            {
+                int zoneIndex = GetZoneIndexByReputation(zoneWeights, avgReputation);
+                scheduleSlot.zoneType = workZones[zoneIndex];
+                scheduleSlot.zoneName = workZoneNames[zoneIndex];
+            }
+            else
+            {
+                scheduleSlot.zoneType = "break";
+                scheduleSlot.zoneName = slot.slotType;
+            }
+            
+            dailySchedule.Add(scheduleSlot);
+        }
+        
+        UpdateCurrentAndNextSlot();
+    }
+    
+    int GetZoneIndexByReputation(int[] weights, float reputation)
+    {
+        float repFactor = Mathf.Clamp(reputation / 100f, -1f, 1f);
+        
+        float[] adjustedWeights = new float[weights.Length];
+        for (int i = 0; i < weights.Length; i++)
+        {
+            if (i < 3)
+                adjustedWeights[i] = weights[i] * (1 + repFactor);
+            else
+                adjustedWeights[i] = weights[i] * (1 - repFactor);
+            
+            adjustedWeights[i] = Mathf.Max(0.1f, adjustedWeights[i]);
+        }
+        
+        float totalWeight = 0;
+        foreach (float w in adjustedWeights)
+            totalWeight += w;
+        
+        float randomValue = Random.Range(0, totalWeight);
+        float currentSum = 0;
+        
+        for (int i = 0; i < adjustedWeights.Length; i++)
+        {
+            currentSum += adjustedWeights[i];
+            if (randomValue <= currentSum)
+                return i;
+        }
+        
+        return 0;
+    }
+    
+void UpdateCurrentAndNextSlot()
 {
-    // СБРАСЫВАЕМ СТАТИЧЕСКИЕ ПЕРЕМЕННЫЕ ПРИ НОВОМ ЗАБЕГЕ
-    LastDays = 1;
-    LastSalary = 0;
-    totalSalary = 0f;
-    currentDaySalary = 0f;
-    currentDay = 1;
+    currentSlot = null;
+    nextSlot = null;
     
-    stamina = FindAnyObjectByType<StaminaNew>();
-    angerSystem = FindAnyObjectByType<AngerSystem>();
-    timePerSecond = 1f / secondsPerHour;
+    for (int i = 0; i < dailySchedule.Count; i++)
+    {
+        ScheduleSlot slot = dailySchedule[i];
+        
+        // Находим текущий слот (любой)
+        if (currentTime >= slot.startTime && currentTime < slot.endTime)
+        {
+            currentSlot = slot;
+            
+            // Находим следующий слот (любой)
+            for (int j = i + 1; j < dailySchedule.Count; j++)
+            {
+                nextSlot = dailySchedule[j];
+                break;
+            }
+            break;
+        }
+    }
     
-    currentTime = startHour;
-    currentHour = startHour;
-    currentMinute = 0;
-    isDayActive = true;
-    
-    if (endDayPanel != null)
-        endDayPanel.SetActive(false);
-    
-    if (nextDayButton != null)
-        nextDayButton.onClick.AddListener(OnNextDayButton);
-    
-    UpdateAllUI();
-    UpdateStaticData();
+    UpdateHUD();
 }
+    
+void UpdateHUD()
+{
+    if (currentSlot != null)
+    {
+        // ТЕКУЩАЯ ТОЧКА
+        if (currentZoneText != null)
+            currentZoneText.text = $"СЕЙЧАС: {currentSlot.zoneName}";
+        
+        if (currentZoneTimerText != null)
+        {
+            float timeLeft = currentSlot.endTime - currentTime;
+            int minutesLeft = Mathf.FloorToInt(timeLeft * 60);
+            currentZoneTimerText.text = $"до {FormatTime(currentSlot.endTime)} ({minutesLeft} мин)";
+        }
+        
+        // СЛЕДУЮЩАЯ ТОЧКА (включая перерывы)
+        if (nextZoneText != null)
+        {
+            // Ищем следующий слот (любой, не только рабочий)
+            ScheduleSlot nextAnySlot = GetNextAnySlot();
+            if (nextAnySlot != null)
+            {
+                string nextName = nextAnySlot.slotType == "Рабочая точка" ? nextAnySlot.zoneName : nextAnySlot.zoneName;
+                nextZoneText.text = $"СЛЕДУЮЩАЯ: {nextName} в {FormatTime(nextAnySlot.startTime)}";
+            }
+        }
+    }
+    else
+    {
+        // Если сейчас перерыв
+        if (currentZoneText != null)
+            currentZoneText.text = "СЕЙЧАС: ПЕРЕРЫВ";
+        
+        if (currentZoneTimerText != null && nextSlot != null)
+            currentZoneTimerText.text = $"до {FormatTime(nextSlot.startTime)}";
+        
+        if (nextZoneText != null && nextSlot != null)
+            nextZoneText.text = $"СЛЕДУЮЩАЯ: {nextSlot.zoneName} в {FormatTime(nextSlot.startTime)}";
+    }
+}
+
+ScheduleSlot GetNextAnySlot()
+{
+    // Находим следующий слот после текущего времени (любой: рабочий или перерыв)
+    for (int i = 0; i < dailySchedule.Count; i++)
+    {
+        if (dailySchedule[i].startTime > currentTime)
+        {
+            return dailySchedule[i];
+        }
+    }
+    return null;
+}
+    
+    public string GetCurrentRequiredZone()
+    {
+        if (currentSlot != null && currentSlot.slotType == "Рабочая точка")
+            return currentSlot.zoneType;
+        return "break";
+    }
+    
+    public string GetCurrentRequiredZoneName()
+    {
+        if (currentSlot != null && currentSlot.slotType == "Рабочая точка")
+            return currentSlot.zoneName;
+        return "Перерыв";
+    }
+    
+    string FormatTime(float time)
+    {
+        int hour = Mathf.FloorToInt(time);
+        int minute = Mathf.FloorToInt((time - hour) * 60);
+        return $"{hour:00}:{minute:00}";
+    }
     
     void Update()
     {
@@ -92,6 +297,7 @@ void Start()
         }
         
         UpdateTimeDisplay();
+        UpdateCurrentAndNextSlot();
         
         int newHour = Mathf.FloorToInt(currentTime);
         if (newHour > currentHour)
@@ -214,7 +420,6 @@ void Start()
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
-            player.transform.position = new Vector3(0, 1, 0);
             CharacterController controller = player.GetComponent<CharacterController>();
             if (controller != null)
             {
@@ -223,6 +428,9 @@ void Start()
                 controller.enabled = true;
             }
         }
+        
+        // Генерируем новое расписание
+        GenerateSchedule();
         
         UpdateAllUI();
         UpdateStaticData();
@@ -285,5 +493,30 @@ void Start()
     public float GetTotalSalary()
     {
         return totalSalary;
+    }
+    
+    [System.Serializable]
+    public class TimeSlot
+    {
+        public float startTime;
+        public float endTime;
+        public string slotType;
+        
+        public TimeSlot(float start, float end, string type)
+        {
+            startTime = start;
+            endTime = end;
+            slotType = type;
+        }
+    }
+    
+    [System.Serializable]
+    public class ScheduleSlot
+    {
+        public float startTime;
+        public float endTime;
+        public string slotType;
+        public string zoneType;
+        public string zoneName;
     }
 }

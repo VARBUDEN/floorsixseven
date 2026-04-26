@@ -120,6 +120,18 @@ public class StaminaNew : MonoBehaviour
         }
     }
 
+public void SetMaxStamina(float newMax)
+{
+    maxStamina = newMax;
+    currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+    
+    if (staminaSlider != null)
+        staminaSlider.maxValue = maxStamina;
+    
+    UpdateUI();
+    Debug.Log($"[Stamina] Max стамины изменён на {maxStamina}");
+}
+
     void CheckLookDown()
     {
         if (Camera.main != null)

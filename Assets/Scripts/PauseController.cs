@@ -36,16 +36,17 @@ public class PauseController : MonoBehaviour
         Cursor.visible = false;
     }
     
-    void Update()
+  void Update()
+{
+    // ТОЛЬКО ESCAPE ДЛЯ ПАУЗЫ
+    if (Input.GetKeyDown(KeyCode.Escape))
     {
-        if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (isPaused)
-                Resume();
-            else
-                Pause();
-        }
+        if (isPaused)
+            Resume();
+        else
+            Pause();
     }
+}
     
     void Pause()
     {
