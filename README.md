@@ -4,10 +4,10 @@
 
 **Симулятор администратора смотровой площадки**
 
-[![Version](https://img.shields.io/badge/version-Beta%201.0-blue)]()
+[![Version](https://img.shields.io/badge/version-Beta%201.1-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.4.3f1-black?logo=unity)]()
-[![Status](https://img.shields.io/badge/status-stable%20build%20soon-yellow)]()
-[![Build](https://img.shields.io/badge/build-available%20in%20source%20only-orange)]()
+[![Status](https://img.shields.io/badge/status-stable-yellowgreen)]()
+[![Build](https://img.shields.io/badge/build-available-green)]()
 
 </div>
 
@@ -16,6 +16,10 @@
 Вы — администратор смотровой площадки на 67-м этаже. Ваша задача — работать 12 часов в день, балансируя между выполнением обязанностей и желанием отдохнуть. Смотрите в телефон и убeгайте на перерыв, чтобы восстановить силы, но не попадитесь проверяющим. Копите зарплату, улучшайте репутацию и держитесь как можно дольше, пока вас не уволят.
 <!-- убигайте или убeгайте какая разница. я спать хочу а за окном 4 часа ночи -->
 ---
+
+## Скачать
+
+[⬇️ Beta 1.1 — Выход в Свет](https://github.com/VARBUDEN/floorsixseven/releases/download/beta-1.1/Smotrovaya67_Beta1.1.zip.zip)
 
 ## 🎮 ГЕЙМПЛЕЙ
 
