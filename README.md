@@ -4,10 +4,10 @@
 
 **Симулятор администратора смотровой площадки**
 
-[![Version](https://img.shields.io/badge/version-Beta%201.0-blue)]()
+[![Version](https://img.shields.io/badge/version-Beta%201.1-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.4.3f1-black?logo=unity)]()
-[![Status](https://img.shields.io/badge/status-stable%20build%20soon-yellow)]()
-[![Build](https://img.shields.io/badge/build-available%20in%20source%20only-orange)]()
+[![Status](https://img.shields.io/badge/status-stable-yellowgreen)]()
+[![Build](https://img.shields.io/badge/build-available-green)]()
 
 </div>
 
