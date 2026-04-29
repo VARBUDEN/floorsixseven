@@ -12,12 +12,10 @@ public class WorkZoneNew : MonoBehaviour
     public List<SimpleBot> inspectorBots = new List<SimpleBot>();
 
     private StaminaNew stamina;
-    private DayCycleSystem dayCycle;
 
     void Start()
     {
         stamina = FindAnyObjectByType<StaminaNew>();
-        dayCycle = FindAnyObjectByType<DayCycleSystem>();
     }
 
     void OnTriggerEnter(Collider other)
@@ -29,36 +27,26 @@ public class WorkZoneNew : MonoBehaviour
         }
     }
 
-    void OnTriggerExit(Collider other)
+void OnTriggerExit(Collider other)
+{
+    if (other.CompareTag("Player"))
     {
-        if (other.CompareTag("Player"))
+        isOccupiedByPlayer = false;
+        Debug.Log($"[WorkZone] Игрок вышел из зоны: {zoneName}");
+        
+        if (stamina != null)
         {
-            isOccupiedByPlayer = false;
-            Debug.Log($"[WorkZone] Игрок вышел из зоны: {zoneName}");
+            stamina.isAtWork = false;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
         }
     }
+}
 
     void OnTriggerStay(Collider other)
     {
         if (!other.CompareTag("Player")) return;
         if (stamina == null) return;
-        if (dayCycle == null) return;
         
-        string requiredZone = dayCycle.GetCurrentRequiredZone();
-        
-        // Проверяем, на своей ли точке игрок по расписанию
-        bool isCorrectZone = (zoneType == requiredZone);
-        
-        if (isCorrectZone && requiredZone != "break")
-        {
-            // На своей точке - работаем, тратим стамину
-            stamina.isAtWork = true;
-            stamina.SetZoneType(zoneType);
-        }
-        else
-        {
-            // Не на своей точке - не работаем, стамина не тратится
-            stamina.isAtWork = false;
-        }
+        stamina.isAtWork = true;
+        stamina.SetZoneType(zoneType);
     }
 }

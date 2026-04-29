@@ -35,19 +35,17 @@ public class InspectZone : MonoBehaviour
         if (!isPlayerInside) return;
         if (playerStamina == null) return;
         
-        // Не начисляем гнев, если день уже закончен
-        DayCycleSystem dayCycle = FindAnyObjectByType<DayCycleSystem>();
-        if (dayCycle != null && !dayCycle.isDayActive) return;
-        
         if (playerStamina.isLookingDown)
         {
+            // Тратим стамину
+            playerStamina.AddStamina(-staminaPenaltyPerSecond * Time.deltaTime);
+            
+            // Добавляем гнев
             AngerSystem anger = FindAnyObjectByType<AngerSystem>();
             if (anger != null)
             {
                 anger.AddDailyAnger(angerPerSecond * Time.deltaTime);
             }
-            
-            playerStamina.AddStamina(-staminaPenaltyPerSecond * Time.deltaTime);
         }
     }
 }
