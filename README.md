@@ -17,6 +17,10 @@
 <!-- убигайте или убeгайте какая разница. я спать хочу а за окном 4 часа ночи -->
 ---
 
+## Скачать
+
+[⬇️ Beta 1.1 — Выход в Свет](https://github.com/VARBUDEN/floorsixseven/releases/download/beta-1.1/Smotrovaya67_Beta1.1.zip.zip)
+
 ## 🎮 ГЕЙМПЛЕЙ
 
 ### Основные механики
