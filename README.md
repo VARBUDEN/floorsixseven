@@ -4,7 +4,7 @@
 
 **Симулятор администратора смотровой площадки**
 
-[![Version](https://img.shields.io/badge/version-Beta%201.1-blue)]()
+[![Version](https://img.shields.io/badge/version-Beta%201.1b-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.4.3f1-black?logo=unity)]()
 [![Status](https://img.shields.io/badge/status-stable-yellowgreen)]()
 [![Build](https://img.shields.io/badge/build-available-green)]()
@@ -19,7 +19,7 @@
 
 ## Скачать
 
-[⬇️ Beta 1.1 — Выход в Свет](https://github.com/VARBUDEN/floorsixseven/releases/download/beta-1.1/Smotrovaya67_Beta1.1.zip.zip)
+[⬇️ Beta 1.1b — Выход в Свет](https://github.com/VARBUDEN/floorsixseven/releases/download/beta-1.1b/beta-1.1b.zip)
 
 ## 🎮 ГЕЙМПЛЕЙ
 
