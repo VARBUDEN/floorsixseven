@@ -23,28 +23,27 @@ public class ScheduleManager : MonoBehaviour
 
     void Update()
     {
-        // Проверка паузы
-        PauseManager pauseManager = FindAnyObjectByType<PauseManager>();
-        bool isPaused = pauseManager != null && pauseManager.IsPaused();
-        
-        // Проверка конца дня
+        // Проверка паузы и конца дня
         GameManager gm = FindAnyObjectByType<GameManager>();
         bool isEndDayActive = gm != null && gm.IsEndDayActive();
-        
-        // Если пауза или конец дня — TAB не работает
-        if (isPaused || isEndDayActive) return;
-        
-        // Если время остановлено (например, диалог) — тоже не работаем
-        if (Time.timeScale == 0f) return;
 
-        if (Input.GetKeyDown(openKey))
+        if (Time.timeScale == 0f && !isOpen) return;
+
+        if (isEndDayActive) return;
+
+        if (Input.GetKey(openKey))
         {
-            OpenSchedule();
+            if (!isOpen)
+            {
+                OpenSchedule();
+            }
         }
-
-        if (Input.GetKeyUp(openKey))
+        else
         {
-            CloseSchedule();
+            if (isOpen)
+            {
+                CloseSchedule();
+            }
         }
     }
 
