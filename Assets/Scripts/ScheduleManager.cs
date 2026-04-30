@@ -9,67 +9,81 @@ public class ScheduleManager : MonoBehaviour
     public TextMeshProUGUI scheduleText;
     public TextMeshProUGUI reputationText;
     public TextMeshProUGUI historyText;
-    
+
     [Header("=== НАСТРОЙКИ ===")]
     public KeyCode openKey = KeyCode.Tab;
-    
+
     private bool isOpen = false;
-    
+
     void Start()
     {
         if (scheduleCanvas != null)
             scheduleCanvas.SetActive(false);
     }
-    
+
     void Update()
     {
+        // Проверка паузы
+        PauseManager pauseManager = FindAnyObjectByType<PauseManager>();
+        bool isPaused = pauseManager != null && pauseManager.IsPaused();
+        
+        // Проверка конца дня
+        GameManager gm = FindAnyObjectByType<GameManager>();
+        bool isEndDayActive = gm != null && gm.IsEndDayActive();
+        
+        // Если пауза или конец дня — TAB не работает
+        if (isPaused || isEndDayActive) return;
+        
+        // Если время остановлено (например, диалог) — тоже не работаем
+        if (Time.timeScale == 0f) return;
+
         if (Input.GetKeyDown(openKey))
         {
             OpenSchedule();
         }
-        
+
         if (Input.GetKeyUp(openKey))
         {
             CloseSchedule();
         }
     }
-    
+
     void OpenSchedule()
     {
         if (isOpen) return;
-        
+
         isOpen = true;
         Time.timeScale = 0f;
-        
+
         if (scheduleCanvas != null)
             scheduleCanvas.SetActive(true);
-        
+
         UpdateScheduleText();
         UpdateReputationText();
         UpdateHistoryText();
-        
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
-    
+
     void CloseSchedule()
     {
         if (!isOpen) return;
-        
+
         isOpen = false;
         Time.timeScale = 1f;
-        
+
         if (scheduleCanvas != null)
             scheduleCanvas.SetActive(false);
-        
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
-    
+
     void UpdateScheduleText()
     {
         if (scheduleText == null) return;
-        
+
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("РАСПИСАНИЕ НА ДЕНЬ\n");
         sb.AppendLine("═══════════════════════════════");
@@ -89,14 +103,14 @@ public class ScheduleManager : MonoBehaviour
         sb.AppendLine("19:20 - 20:00    8-ка");
         sb.AppendLine("20:00 - 20:20    === ПЕРЕРЫВ ===");
         sb.AppendLine("20:20 - 22:00    Лифт");
-        
+
         scheduleText.text = sb.ToString();
     }
-    
+
     void UpdateReputationText()
     {
         if (reputationText == null) return;
-        
+
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("РЕПУТАЦИЯ NPC");
         sb.AppendLine("══════════════════");
@@ -107,19 +121,19 @@ public class ScheduleManager : MonoBehaviour
         sb.AppendLine("Кулич:        0  (НОРМА)");
         sb.AppendLine("Магомедова:   5  (НОРМА)");
         sb.AppendLine("Радмир:     -10  (НОРМА)");
-        
+
         reputationText.text = sb.ToString();
     }
-    
+
     void UpdateHistoryText()
     {
         if (historyText == null) return;
-        
+
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("ИСТОРИЯ ВЫБОРОВ");
         sb.AppendLine("══════════════════");
         sb.AppendLine("Пока нет выборов...");
-        
+
         historyText.text = sb.ToString();
     }
 }

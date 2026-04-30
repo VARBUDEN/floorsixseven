@@ -5,16 +5,19 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+
     public static int currentDay = 1;
     public static float totalSalary = 0f;
+    public static float burnoutMultiplier = 1f;
 
     [Header("Время")]
-    public float dayDuration = 720f; // 12 минут в секундах
+    public float dayDuration = 720f;
 
     [Header("UI")]
     public TextMeshProUGUI dayText;
     public GameObject endDayPanel;
     public Button nextDayButton;
+    public TextMeshProUGUI endDayText;
 
     [Header("UI Времени")]
     public TextMeshProUGUI timeText;
@@ -34,7 +37,6 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI floatingBonusText;
 
     private float accumulatedBonus = 0f;
-    private float bonusAccumulationTimer = 0f;
     private float bonusLeaveTimer = 0f;
     private bool isOnBonusZone = false;
     private string lastBonusZone = "";
@@ -42,11 +44,14 @@ public class GameManager : MonoBehaviour
     private float dayTimer;
     private bool isDayActive = true;
 
-    private StaminaNew stamina;  // ← ДОБАВИТЬ
-    private float hourlyTimer = 0f;  // ← ДОБАВИТЬ
+    private StaminaNew stamina;
+    private float hourlyTimer = 0f;
 
-    public static float burnoutMultiplier = 1f;  // множитель траты стамины, растёт с каждым днём
     public float burnoutIncreasePerDay = 0.2f;
+
+    [Header("=== ТЕКУЩИЕ ЗНАЧЕНИЯ ===")]
+    public float currentTime = 10f;
+    public float currentDaySalary = 0f;
 
     void Start()
     {
@@ -113,7 +118,6 @@ public class GameManager : MonoBehaviour
 
             float accumulationRate = zoneBonus / 60f;
             accumulatedBonus += accumulationRate * Time.deltaTime;
-            bonusAccumulationTimer = 0f;
 
             UpdateFloatingBonusText(currentZone, zoneBonus, accumulatedBonus);
         }
@@ -129,6 +133,7 @@ public class GameManager : MonoBehaviour
                     {
                         float bonusToAdd = accumulatedBonus;
                         totalSalary += bonusToAdd;
+                        currentDaySalary += bonusToAdd;
                         accumulatedBonus = 0f;
                         UpdateSalaryUI();
                         Debug.Log($"[Зарплата] Зачислен бонус: {bonusToAdd:F2}");
@@ -191,6 +196,7 @@ public class GameManager : MonoBehaviour
     {
         float total = baseHourlyRate;  // без бонуса точек
         totalSalary += total;
+        currentDaySalary += total;
         UpdateSalaryUI();
         Debug.Log($"[Зарплата] Час +{total} (база={baseHourlyRate})");
     }
@@ -224,7 +230,28 @@ public class GameManager : MonoBehaviour
     void EndDay()
     {
         isDayActive = false;
+
+        if (accumulatedBonus > 0)
+        {
+            totalSalary += accumulatedBonus;
+            accumulatedBonus = 0f;
+            UpdateSalaryUI();
+            Debug.Log($"[GameManager] Бонус зачислен при завершении дня: {accumulatedBonus:F2}");
+        }
+
         Time.timeScale = 0f;
+
+        // СОХРАНЯЕМ ТЕКУЩИЙ ПРОГРЕСС
+        PlayerPrefs.SetInt("LastDays", currentDay);
+        PlayerPrefs.SetInt("LastSalary", Mathf.RoundToInt(totalSalary));
+        PlayerPrefs.Save();
+
+        if (endDayText != null)
+        {
+            endDayText.text = $"ДЕНЬ {currentDay} ЗАКОНЧЕН\n\n"
+                            + $"Зарплата за день: {Mathf.RoundToInt(currentDaySalary)}\n"
+                            + $"Общая зарплата: {Mathf.RoundToInt(totalSalary)}";
+        }
 
         if (endDayPanel != null)
             endDayPanel.SetActive(true);
@@ -232,26 +259,40 @@ public class GameManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
-
-void NextDay()
-{
-    currentDay++;
-    // Увеличиваем выгорание
-    burnoutMultiplier += burnoutIncreasePerDay;
-
-    // Восстанавливаем стамину и заряд до 80%
-    StaminaNew stamina = FindAnyObjectByType<StaminaNew>();
-    if (stamina != null)
+    public bool IsEndDayActive()
     {
-        stamina.currentStamina = stamina.maxStamina * 0.8f;
-        stamina.currentBattery = stamina.maxBattery * 0.8f;
-        stamina.UpdateUI();
-        stamina.UpdateBatteryUI();
+        return endDayPanel != null && endDayPanel.activeSelf;
     }
+    public void ForceAddBonus()
+    {
+        if (accumulatedBonus > 0)
+        {
+            totalSalary += accumulatedBonus;
+            currentDaySalary += accumulatedBonus;
+            accumulatedBonus = 0f;
+            UpdateSalaryUI();
+            Debug.Log($"[GameManager] Бонус принудительно зачислен: {accumulatedBonus:F2}");
+        }
+    }
+    void NextDay()
+    {
+        currentDay++;
+        // Увеличиваем выгорание
+        burnoutMultiplier += burnoutIncreasePerDay;
 
-    Time.timeScale = 1f;
-    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-}
+        // Восстанавливаем стамину и заряд до 80%
+        StaminaNew stamina = FindAnyObjectByType<StaminaNew>();
+        if (stamina != null)
+        {
+            stamina.currentStamina = stamina.maxStamina * 0.8f;
+            stamina.currentBattery = stamina.maxBattery * 0.8f;
+            stamina.UpdateUI();
+            stamina.UpdateBatteryUI();
+        }
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 
     void UpdateUI()
     {
@@ -262,7 +303,28 @@ void NextDay()
     public void EndDayEarly()
     {
         isDayActive = false;
+
+        if (accumulatedBonus > 0)
+        {
+            totalSalary += accumulatedBonus;
+            accumulatedBonus = 0f;
+            UpdateSalaryUI();
+            Debug.Log($"[GameManager] Бонус зачислен при досрочном завершении: {accumulatedBonus:F2}");
+        }
+
         Time.timeScale = 0f;
+
+        // СОХРАНЯЕМ ТЕКУЩИЙ ПРОГРЕСС
+        PlayerPrefs.SetInt("LastDays", currentDay);
+        PlayerPrefs.SetInt("LastSalary", Mathf.RoundToInt(totalSalary));
+        PlayerPrefs.Save();
+
+        if (endDayText != null)
+        {
+            endDayText.text = $"ДЕНЬ {currentDay} ЗАКОНЧЕН ДОСРОЧНО\n\n"
+                            + $"Зарплата за день: {Mathf.RoundToInt(currentDaySalary)}\n"
+                            + $"Общая зарплата: {Mathf.RoundToInt(totalSalary)}";
+        }
 
         if (endDayPanel != null)
             endDayPanel.SetActive(true);

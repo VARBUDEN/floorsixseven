@@ -9,6 +9,7 @@ public class GameReset : MonoBehaviour
         
         GameManager.currentDay = 1;
         GameManager.totalSalary = 0f;
+        GameManager.burnoutMultiplier = 1f;
         AngerSystem.StaticTotalAnger = 0;
         
         PlayerPrefs.DeleteKey("TotalAnger");

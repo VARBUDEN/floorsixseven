@@ -58,22 +58,25 @@ public class AngerSystem : MonoBehaviour
         }
     }
 
-    public void AddTotalAnger(int amount)
-    {
-        totalAnger += amount;
-        totalAnger = Mathf.Clamp(totalAnger, 0, maxTotalAnger);
-        UpdateTotalAngerUI();
+public void AddTotalAnger(int amount)
+{
+    totalAnger += amount;
+    totalAnger = Mathf.Clamp(totalAnger, 0, maxTotalAnger);
+    UpdateTotalAngerUI();
 
-        if (totalAnger >= maxTotalAnger)
-        {
-            Debug.Log("[Гнев] ВАС УВОЛИЛИ!");
-            StaticTotalAnger = 0;
-            PlayerPrefs.SetInt("LastDays", GameManager.currentDay);
-            PlayerPrefs.SetInt("LastSalary", Mathf.RoundToInt(GameManager.totalSalary));
-            PlayerPrefs.Save();
-            SceneManager.LoadScene("GameOver");
-        }
+    if (totalAnger >= maxTotalAnger)
+    {
+        Debug.Log("[Гнев] ВАС УВОЛИЛИ!");
+        
+        // СОХРАНЯЕМ ПОСЛЕДНИЙ ЗАБЕГ
+        PlayerPrefs.SetInt("LastDays", GameManager.currentDay);
+        PlayerPrefs.SetInt("LastSalary", Mathf.RoundToInt(GameManager.totalSalary));
+        PlayerPrefs.Save();
+        
+        StaticTotalAnger = 0;
+        SceneManager.LoadScene("GameOver");
     }
+}
 
     public void ResetDailyAnger()
     {

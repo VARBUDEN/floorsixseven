@@ -125,6 +125,12 @@ public class StaminaNew : MonoBehaviour
         {
             Debug.Log("[Stamina] СТАМИНА КОНЧИЛАСЬ!");
 
+            GameManager gm = FindAnyObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.ForceAddBonus();
+            }
+
             // Костыль: вызываем гнев на 100%
             AngerSystem anger = FindAnyObjectByType<AngerSystem>();
             if (anger != null)

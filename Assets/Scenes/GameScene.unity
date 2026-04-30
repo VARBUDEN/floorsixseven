@@ -3968,7 +3968,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &365053750
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11419,6 +11419,7 @@ MonoBehaviour:
   dayText: {fileID: 286660267}
   endDayPanel: {fileID: 365053749}
   nextDayButton: {fileID: 1468023698}
+  endDayText: {fileID: 1082310081}
   timeText: {fileID: 1174269450}
   timeProgressSlider: {fileID: 1545449084}
   baseHourlyRate: 10
@@ -11431,6 +11432,8 @@ MonoBehaviour:
   hourlyRateText: {fileID: 69719525}
   floatingBonusText: {fileID: 242462202}
   burnoutIncreasePerDay: 0.2
+  currentTime: 10
+  currentDaySalary: 0
 --- !u!4 &1239007286
 Transform:
   m_ObjectHideFlags: 0
@@ -15628,7 +15631,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AngerSystem
   dailyAnger: 0
-  maxDailyAnger: 5
+  maxDailyAnger: 50
   totalAnger: 0
   maxTotalAnger: 5
   dailyAngerSlider: {fileID: 773219517}

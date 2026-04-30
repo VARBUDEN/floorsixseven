@@ -102,4 +102,8 @@ public class PauseManager : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
+    public bool IsPaused()
+{
+    return isPaused;
+}
 }

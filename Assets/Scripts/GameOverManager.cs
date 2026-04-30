@@ -13,8 +13,8 @@ public class GameOverManager : MonoBehaviour
     public Button restartButton;
     public Button menuButton;
     
-    private int daysSurvived;
-    private int totalSalary;
+    private int lastDays;
+    private int lastSalary;
     private int bestSalary;
     private int bestDays;
     
@@ -23,32 +23,36 @@ public class GameOverManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         
-        daysSurvived = PlayerPrefs.GetInt("LastDays", 0);
-        totalSalary = PlayerPrefs.GetInt("LastSalary", 0);
+        // ЗАГРУЖАЕМ ДАННЫЕ
+        lastDays = PlayerPrefs.GetInt("LastDays", 0);
+        lastSalary = PlayerPrefs.GetInt("LastSalary", 0);
         bestSalary = PlayerPrefs.GetInt("BestSalary", 0);
         bestDays = PlayerPrefs.GetInt("BestDays", 0);
         
-        Debug.Log($"[GameOver] Days={daysSurvived}, Salary={totalSalary}, Best={bestSalary}");
+        Debug.Log($"[GameOver] lastDays={lastDays}, lastSalary={lastSalary}, bestSalary={bestSalary}, bestDays={bestDays}");
         
+        // ОТОБРАЖАЕМ ИТОГИ ПОСЛЕДНЕГО ЗАБЕГА
         if (daysText != null)
-            daysText.text = $"ДНЕЙ ПРОЖИТО: {daysSurvived}";
+            daysText.text = $"ДНЕЙ ПРОЖИТО: {lastDays}";
         
         if (salaryText != null)
-            salaryText.text = $"ИТОГОВАЯ ЗАРПЛАТА: {totalSalary}";
+            salaryText.text = $"ИТОГОВАЯ ЗАРПЛАТА: {lastSalary}";
         
-        bool isNewRecord = totalSalary > bestSalary;
+        // ПРОВЕРЯЕМ РЕКОРД
+        bool isNewRecord = lastSalary > bestSalary;
         
         if (isNewRecord)
         {
-            PlayerPrefs.SetInt("BestSalary", totalSalary);
-            PlayerPrefs.SetInt("BestDays", daysSurvived);
+            // СОХРАНЯЕМ НОВЫЙ РЕКОРД
+            PlayerPrefs.SetInt("BestSalary", lastSalary);
+            PlayerPrefs.SetInt("BestDays", lastDays);
             PlayerPrefs.Save();
             
             if (newRecordText != null)
                 newRecordText.text = "НОВЫЙ РЕКОРД!";
             
             if (recordText != null)
-                recordText.text = $"РЕКОРД: {totalSalary} (дней: {daysSurvived})";
+                recordText.text = $"РЕКОРД: {lastSalary} монет ({lastDays} дней)";
         }
         else
         {
@@ -56,7 +60,7 @@ public class GameOverManager : MonoBehaviour
                 newRecordText.text = "";
             
             if (recordText != null)
-                recordText.text = $"ЛУЧШИЙ РЕКОРД: {bestSalary} (дней: {bestDays})";
+                recordText.text = $"ЛУЧШИЙ РЕКОРД: {bestSalary} монет ({bestDays} дней)";
         }
         
         if (restartButton != null)
