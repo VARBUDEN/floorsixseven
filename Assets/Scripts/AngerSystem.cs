@@ -14,6 +14,7 @@ public class AngerSystem : MonoBehaviour
     [Header("=== ОБЩИЙ ГНЕВ (0-5) ===")]
     public int totalAnger = 0;
     public int maxTotalAnger = 5;
+    public bool aminaBuffActive = false;
 
     [Header("=== UI ===")]
     public Slider dailyAngerSlider;
@@ -76,6 +77,12 @@ public void AddTotalAnger(int amount)
         StaticTotalAnger = 0;
         SceneManager.LoadScene("GameOver");
     }
+}
+
+public void EnableAminaBuff()
+{
+    aminaBuffActive = true;
+    Debug.Log("[Anger] Бафф Амины активирован: гнев растёт медленнее");
 }
 
     public void ResetDailyAnger()

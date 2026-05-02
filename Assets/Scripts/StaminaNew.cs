@@ -39,6 +39,7 @@ public class StaminaNew : MonoBehaviour
     public bool isAtWork = false;
     public bool isOnBreak = false;
     public string currentZoneType = "none";
+    public bool isSvistikBuffActive = false;
 
     [Header("=== UI ===")]
     public Slider staminaSlider;
@@ -58,7 +59,7 @@ public class StaminaNew : MonoBehaviour
         UpdateBatteryUI();
         UpdateDrainRateUI();
 
-        ApplyCharacterBuffs(CharacterSelect.selectedCharacter);
+        //ApplyCharacterBuffs(CharacterSelect.selectedCharacter);
 
         Debug.Log($"[Stamina] Запущена. Стамина: {currentStamina}/{maxStamina}, Заряд: {currentBattery}/{maxBattery}");
     }
@@ -70,14 +71,21 @@ public class StaminaNew : MonoBehaviour
 
         float totalDrain = 0f;
 
-        if (isAtWork && !isOnBreak)
-        {
-            totalDrain = GetZoneDrain() * Time.deltaTime;
-        }
-        else
-        {
-            totalDrain = constantDrain * currentBurnoutMultiplier * Time.deltaTime;
-        }
+if (isAtWork && !isOnBreak)
+{
+    if (isSvistikBuffActive && currentZoneType == "eight")
+    {
+        currentStamina += 1f * Time.deltaTime;  // Восстановление
+    }
+    else
+    {
+        currentStamina -= GetZoneDrain() * Time.deltaTime;
+    }
+}
+else
+{
+    currentStamina -= constantDrain * currentBurnoutMultiplier * Time.deltaTime;
+}
 
         if (isOnBreak)
         {
@@ -141,6 +149,41 @@ public class StaminaNew : MonoBehaviour
             enabled = false;
         }
     }
+
+    public void EnableSvistikBuff()
+{
+    isSvistikBuffActive = true;
+    Debug.Log("[Stamina] Бафф Свистика активирован: 8-ка восстанавливает стамину");
+}
+
+public void EnableDyrkaBuff(float multiplier)
+{
+    liftDrain *= multiplier;
+    eightDrain *= multiplier;
+    promoDrain *= multiplier;
+    perekDrain *= multiplier;
+    navigDrain *= multiplier;
+    kalizeumDrain *= multiplier;
+    Debug.Log("[Stamina] Бафф Дырки активирован: трата стамины уменьшена");
+}
+
+public void EnableMorenaBuff(float staminaBonus, float batteryBonus, float speedBonus)
+{
+    maxStamina = staminaBonus;
+    currentStamina = staminaBonus;
+    maxBattery = batteryBonus;
+    currentBattery = batteryBonus;
+    PlayerMovement playerMovement = GetComponent<PlayerMovement>();
+    if (playerMovement != null)
+        playerMovement.walkSpeed *= speedBonus;
+    Debug.Log("[Stamina] Бафф Мурены активирован: стамина+заряд+скорость");
+}
+
+public void EnableRadminBuff(float multiplier)
+{
+    lookDownRestoreRate *= multiplier;
+    Debug.Log("[Stamina] Бафф Радмина активирован: восстановление в телефоне увеличено");
+}
 
     void UpdateDrainRateUI()
     {
@@ -268,7 +311,7 @@ public class StaminaNew : MonoBehaviour
         Debug.Log($"[Stamina] +{amount}, стало: {currentStamina:F0}");
     }
 
-    public void ApplyCharacterBuffs(CharacterSelect.Character character)
+/*  public void ApplyCharacterBuffs(CharacterSelect.Character character)
     {
         ResetToDefault();
 
@@ -328,5 +371,5 @@ public class StaminaNew : MonoBehaviour
         batteryDrainRate = 5f;
         batteryRestoreRate = 10f;
         lookDownDelay = 3f;
-    }
+    }*/
 }

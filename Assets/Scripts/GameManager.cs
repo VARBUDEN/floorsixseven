@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public static int currentDay = 1;
     public static float totalSalary = 0f;
     public static float burnoutMultiplier = 1f;
+    public bool isMrPiBuffActive = false;
 
     [Header("Время")]
     public float dayDuration = 720f;
@@ -263,6 +264,18 @@ public class GameManager : MonoBehaviour
     {
         return endDayPanel != null && endDayPanel.activeSelf;
     }
+
+    public void EnableMrPiBuff()
+{
+    isMrPiBuffActive = true;
+    Debug.Log("[GameManager] Бафф Мистера Пи активирован: бонус за честные часы");
+}
+
+public void SetPromoBonus(float bonus)
+{
+    promoBonus = bonus;
+    Debug.Log($"[GameManager] Бафф Шелли активирован: бонус промо = {bonus}");
+}
     public void ForceAddBonus()
     {
         if (accumulatedBonus > 0)
